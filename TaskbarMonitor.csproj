@@ -9,9 +9,13 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>TaskbarMonitor</AssemblyName>
     <RootNamespace>TaskbarMonitor</RootNamespace>
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- Harden: a dependency's runtimeconfig template turns the legacy
+         BinaryFormatter back on (an RCE deserialization vector). We never use
+         it, and this process runs elevated — keep it disabled. -->
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
     <Description>Minimalist hardware monitor embedded in the Windows 11 taskbar</Description>
     <Authors>Marllon Gomes</Authors>
     <Copyright>© 2026 Marllon Gomes</Copyright>

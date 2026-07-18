@@ -17,6 +17,36 @@ public static class Autostart
     public static bool IsEnabled() =>
         RunSchtasks($"/Query /TN \"{TaskName}\"", elevated: false) == 0;
 
+    /// <summary>
+    /// True when the app runs from a system-protected directory (Program Files
+    /// or Windows), i.e. a location only administrators can modify.
+    ///
+    /// The startup task runs elevated at logon. If the executable lived in a
+    /// user-writable folder (Downloads, Desktop, a data drive, the user
+    /// profile…), any code running as the user could overwrite it and have it
+    /// run elevated at the next logon — a local privilege-escalation / UAC
+    /// bypass. The installer puts the app in Program Files; the portable build
+    /// warns before enabling autostart from an unsafe location.
+    /// </summary>
+    public static bool IsExePathSecure()
+    {
+        string exe = Application.ExecutablePath;
+        string?[] protectedRoots =
+        {
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+            Environment.GetEnvironmentVariable("ProgramW6432"),
+            Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+        };
+        foreach (string? root in protectedRoots)
+        {
+            if (string.IsNullOrEmpty(root)) continue;
+            string prefix = root.EndsWith(Path.DirectorySeparatorChar) ? root : root + Path.DirectorySeparatorChar;
+            if (exe.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        return false;
+    }
+
     public static bool Enable()
     {
         string xmlPath = Path.Combine(Settings.Dir, "task.xml");
@@ -86,7 +116,12 @@ public static class Autostart
     {
         try
         {
-            var psi = new ProcessStartInfo("schtasks.exe", args)
+            // Fully-qualified path: launching "schtasks.exe" by bare name would
+            // let CreateProcess search the app directory / CWD first, so a
+            // planted schtasks.exe could run in our elevated context.
+            string schtasks = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.System), "schtasks.exe");
+            var psi = new ProcessStartInfo(schtasks, args)
             {
                 WindowStyle = ProcessWindowStyle.Hidden,
                 CreateNoWindow = true,

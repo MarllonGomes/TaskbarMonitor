@@ -144,9 +144,10 @@ public sealed class OverlayForm : Form
     {
         _labelFont?.Dispose();
         _valueFont?.Dispose();
-        // ~500 weight for the small header labels (closest GDI static face)
+        // ~600 weight for the small header labels (closest GDI static face)
         _labelFont = new Font("Segoe UI Semibold", Math.Max(7, Dpi(8)), FontStyle.Regular, GraphicsUnit.Pixel);
-        _valueFont = new Font("Segoe UI", Math.Max(10, Dpi(12)), FontStyle.Regular, GraphicsUnit.Pixel);
+        // Values: original size, semibold (~600) so the numbers read a bit heavier
+        _valueFont = new Font("Segoe UI Semibold", Math.Max(10, Dpi(12)), FontStyle.Regular, GraphicsUnit.Pixel);
         BuildLayout();
     }
 

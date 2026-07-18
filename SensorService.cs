@@ -26,7 +26,7 @@ public sealed class SensorService : IDisposable
     private readonly object _pollLock = new();
     private volatile Snapshot _current = Snapshot.Empty;
     private volatile bool _ready;
-    private bool _disposed;
+    private volatile bool _disposed;
 
     public Snapshot Current => _current;
     public bool Ready => _ready;
@@ -49,7 +49,12 @@ public sealed class SensorService : IDisposable
         {
             try { _computer.Open(); } catch { }
             _ready = true;
-            if (!_disposed) _timer.Change(0, 1000);
+            // Guard against a shutdown race: Dispose may have fired the timer
+            // away between the _disposed check and Change.
+            if (!_disposed)
+            {
+                try { _timer.Change(0, 1000); } catch (ObjectDisposedException) { }
+            }
         });
     }
 
@@ -119,8 +124,13 @@ public sealed class SensorService : IDisposable
                             if (s.Value is not float v || float.IsNaN(v)) continue;
                             if (s.SensorType == SensorType.Load && s.Name == "Total Activity")
                                 dLoad = v;
-                            else if (s.SensorType == SensorType.Temperature && v > 0 && v < 100)
+                            else if (s.SensorType == SensorType.Temperature)
                             {
+                                // "Warning"/"Critical Temperature" are fixed thresholds,
+                                // not the live reading — never show them.
+                                if (s.Name.Contains("Warning", StringComparison.OrdinalIgnoreCase) ||
+                                    s.Name.Contains("Critical", StringComparison.OrdinalIgnoreCase)) continue;
+                                if (v <= 0 || v >= 100) continue;
                                 int rank = DiskTempRank(s.Name);
                                 if (rank < dTempRank) { dTemp = v; dTempRank = rank; }
                             }
@@ -188,11 +198,15 @@ public sealed class SensorService : IDisposable
         _ => 3,                    // anything else: use the highest value
     };
 
+    // Real LibreHardwareMonitor sensor names. NVMe drives expose a "Composite
+    // Temperature" (the representative value) plus per-sensor readings, where
+    // "#2" is usually a hotspot that reads much higher and is not representative.
     private static int DiskTempRank(string name) => name switch
     {
-        "Temperature" => 0,     // NVMe composite / SATA temperature — the meaningful one
-        "Temperature 1" => 1,
-        "Temperature 2" => 2,   // NVMe hotspot: reads much higher, not representative
+        "Composite Temperature" => 0,
+        "Temperature" => 1,          // SATA / single-sensor drives
+        "Temperature #1" => 2,
+        "Temperature #2" => 4,       // hotspot — last resort
         _ => 3,
     };
 

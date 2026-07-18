@@ -97,10 +97,32 @@ cd TaskbarMonitor
   - *Exit*
 - Logs (if anything goes wrong): `%AppData%\TaskbarMonitor\error.log`.
 
+## CPU temperature shows `--`?
+
+CPU temperature needs elevation and a kernel driver (LibreHardwareMonitor's).
+Check, in order:
+
+1. **Are you running elevated?** Install with the setup installer (it registers
+   an elevated startup task). Unelevated, CPU/disk temps show `--`.
+2. **Is the sensor driver blocked?** Some security software may flag or block the
+   driver (see [SECURITY.md](SECURITY.md)); allow-list the app if so.
+
+Everything else (GPU temp, disk temps, all loads, RAM, network) works regardless.
+
 ## Uninstall
 
-Run `uninstall.ps1` (stops the app and deletes the Scheduled Task), then delete
-the folder. The app stores nothing else besides `%AppData%\TaskbarMonitor`.
+Installer users: **Settings → Apps → TaskbarMonitor → Uninstall**.
+
+Portable users: run `uninstall.ps1` (stops the app and deletes the Scheduled
+Task), then delete the folder. The app stores nothing else besides
+`%AppData%\TaskbarMonitor`.
+
+## Security
+
+TaskbarMonitor runs **elevated at logon** and loads a **kernel driver** to read
+temperatures. The security model, the trust involved, and how to report a
+vulnerability are documented in [SECURITY.md](SECURITY.md). Release binaries are
+unsigned — verify the **SHA-256 checksums** published with each release.
 
 ## How it works
 

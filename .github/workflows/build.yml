@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# Least privilege: the build only needs to read the repo. No write scope is
+# granted to GITHUB_TOKEN, limiting the blast radius of a poisoned build step.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest
@@ -36,7 +41,9 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Install Inno Setup
-        run: choco install innosetup -y --no-progress
+        # Pin the version so a poisoned/updated package can't silently change
+        # the tool that compiles the elevated installer.
+        run: choco install innosetup --version=6.3.3 -y --no-progress
 
       - name: Build installer
         run: powershell -NoProfile -ExecutionPolicy Bypass -File installer\build-installer.ps1

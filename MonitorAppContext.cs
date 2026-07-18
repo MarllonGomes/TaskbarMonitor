@@ -200,7 +200,7 @@ public sealed class MonitorAppContext : ApplicationContext
             diskText + "\n" +
             $"Net: ↑ {Spd(s.NetUpBps)}  ↓ {Spd(s.NetDownBps)}";
         if (!Program.IsElevated)
-            text += "\n\n⚠ Not running as administrator: some temperatures are unavailable.";
+            text += "\n\n⚠ Not running as administrator — CPU/disk temperatures need elevation.";
 
         foreach (var f in _overlays.Values) f.SetTooltip(text);
         _tray.Text = Truncate($"CPU {Fmt(s.CpuLoad, "%")} {Fmt(s.CpuTemp, "°")}  RAM {Fmt(s.RamLoad, "%")}", 63);
@@ -224,12 +224,32 @@ public sealed class MonitorAppContext : ApplicationContext
         var autostartItem = new ToolStripMenuItem("Start with Windows");
         autostartItem.Click += (_, _) =>
         {
-            bool ok = autostartItem.Checked ? Autostart.Disable() : Autostart.Enable();
-            if (!ok)
-                MessageBox.Show(
-                    "Could not change the autostart setting.\n" +
-                    "Accept the administrator prompt (UAC) or run install.ps1.",
-                    "TaskbarMonitor", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            if (autostartItem.Checked)
+            {
+                if (!Autostart.Disable()) ShowAutostartError();
+                return;
+            }
+
+            // The startup task runs elevated. Refuse to create it while the app
+            // runs from a user-writable location — otherwise the task becomes a
+            // privilege-escalation vector (see Autostart.IsExePathSecure).
+            if (!Autostart.IsExePathSecure())
+            {
+                var choice = MessageBox.Show(
+                    "For security, \"Start with Windows\" should only be enabled when " +
+                    "TaskbarMonitor is installed in Program Files.\n\n" +
+                    "This copy runs from:\n" + Application.ExecutablePath + "\n\n" +
+                    "That folder can be modified without administrator rights, and the " +
+                    "startup task runs elevated — so enabling it here would let any program " +
+                    "running as you replace the app and gain elevated access at logon.\n\n" +
+                    "Recommended: install with the setup installer instead.\n\n" +
+                    "Enable anyway?",
+                    "TaskbarMonitor — security warning",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2);
+                if (choice != DialogResult.Yes) return;
+            }
+
+            if (!Autostart.Enable()) ShowAutostartError();
         };
 
         var elevateItem = new ToolStripMenuItem("Restart as administrator (enables temperatures)");
@@ -248,6 +268,12 @@ public sealed class MonitorAppContext : ApplicationContext
         _menu.Items.Add(new ToolStripSeparator());
         _menu.Items.Add(exitItem);
     }
+
+    private static void ShowAutostartError() =>
+        MessageBox.Show(
+            "Could not change the autostart setting.\n" +
+            "Accept the administrator prompt (UAC) or run install.ps1.",
+            "TaskbarMonitor", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
     private void BuildTrayIcon()
     {
@@ -298,8 +324,10 @@ public sealed class MonitorAppContext : ApplicationContext
         SystemEvents.DisplaySettingsChanged -= OnDisplayChanged;
         foreach (var f in _overlays.Values) f.Dispose();
         _overlays.Clear();
+        var icon = _tray.Icon;   // NotifyIcon.Dispose doesn't free the assigned Icon/HICON
         _tray.Visible = false;
         _tray.Dispose();
+        icon?.Dispose();
         _sensors.Dispose();
         ExitThread();
     }

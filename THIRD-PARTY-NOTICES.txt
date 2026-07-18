@@ -1,0 +1,50 @@
+TaskbarMonitor — Third-Party Notices
+====================================
+
+This product bundles the following third-party components. Their licenses and
+source locations are listed below. TaskbarMonitor's own code is under the MIT
+license (see LICENSE); the notices here apply only to the bundled components.
+
+--------------------------------------------------------------------------------
+1. LibreHardwareMonitorLib
+   License: Mozilla Public License 2.0 (MPL-2.0)
+   Source:  https://github.com/LibreHardwareMonitor/LibreHardwareMonitor
+   Copyright (c) LibreHardwareMonitor contributors.
+
+   This component is licensed under the MPL-2.0. The full license text is
+   reproduced below. In accordance with MPL-2.0 §3, the corresponding source
+   code (including any modifications) is available at the URL above. The bundled
+   binary is the unmodified NuGet release of LibreHardwareMonitorLib.
+
+   LibreHardwareMonitor loads a signed kernel driver (derived from WinRing0) to
+   read hardware sensors. See SECURITY.md for the security implications.
+
+--------------------------------------------------------------------------------
+2. HidSharp
+   License: Apache-2.0 / MIT (per project)
+   Source:  https://www.zer7.com/software/hidsharp
+   A transitive dependency of LibreHardwareMonitorLib.
+
+--------------------------------------------------------------------------------
+3. Mono.Posix / MonoPosixHelper
+   License: MIT
+   Source:  https://github.com/mono/mono
+   A transitive dependency of LibreHardwareMonitorLib.
+
+================================================================================
+Mozilla Public License Version 2.0
+================================================================================
+
+The full text of the Mozilla Public License 2.0 is available at:
+
+    https://www.mozilla.org/en-US/MPL/2.0/
+
+A copy is distributed with this notice. If you did not receive a copy, you may
+obtain one at the URL above. The MPL-2.0 covers the LibreHardwareMonitorLib
+component identified in section 1; a recipient of the executable form may obtain
+the covered source code at the LibreHardwareMonitor repository listed there.
+
+MPL-2.0 summary (not a substitute for the license): the covered software is
+provided under a file-level copyleft. You may combine it with code under other
+licenses (as TaskbarMonitor does), but modifications to the MPL-covered files
+themselves must be made available under the MPL. There is no warranty.

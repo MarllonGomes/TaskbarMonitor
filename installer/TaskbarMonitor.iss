@@ -4,7 +4,7 @@
 ; uninstall. Build with installer\build-installer.ps1.
 
 #define MyAppName "TaskbarMonitor"
-#define MyAppVersion "1.1.1"
+#define MyAppVersion "1.1.2"
 #define MyAppPublisher "Marllon Gomes"
 #define MyAppURL "https://github.com/MarllonGomes/TaskbarMonitor"
 #define MyAppExeName "TaskbarMonitor.exe"
@@ -39,6 +39,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "publish\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "tasksetup.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\THIRD-PARTY-NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\SECURITY.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]

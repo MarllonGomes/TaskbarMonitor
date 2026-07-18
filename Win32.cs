@@ -54,8 +54,17 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
 
+    // GetWindowLongPtrW only exists as an export in 64-bit user32; on 32-bit
+    // it's GetWindowLongW. Dispatch by pointer size so an x86 build can't crash
+    // with EntryPointNotFoundException.
+    public static IntPtr GetWindowLongPtr(IntPtr hWnd, int index) =>
+        IntPtr.Size == 8 ? GetWindowLongPtr64(hWnd, index) : new IntPtr(GetWindowLong32(hWnd, index));
+
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
-    public static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int index);
+    private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int index);
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongW")]
+    private static extern int GetWindowLong32(IntPtr hWnd, int index);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern int GetClassName(IntPtr hWnd, StringBuilder sb, int max);

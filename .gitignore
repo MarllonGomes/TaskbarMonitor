@@ -1,6 +1,12 @@
 bin/
 obj/
 dist/
+dist_old/
+dist_stale/
 installer/publish/
 installer/output/
 *.user
+# never commit kernel drivers, logs, or unrelated local tooling
+*.sys
+*.log
+display-watcher/
