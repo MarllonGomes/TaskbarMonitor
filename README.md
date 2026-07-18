@@ -8,10 +8,11 @@ A minimalist hardware monitor that lives in the **left corner of the Windows 11
 taskbar**, on **every screen**. No window, no dock, no skin — just numbers drawn
 straight over the taskbar, updated every second:
 
-```
-CPU  11% 65°   GPU  41% 67°   RAM  44%
-DSK   1% 71°   UP   0K        DO   2M
-```
+![TaskbarMonitor on the Windows 11 taskbar](docs/screenshot.png)
+
+<p align="center">
+  <img src="docs/screenshot-zoom.png" width="400" alt="Close-up of the overlay — DSK temperature at 71 °C shown in amber">
+</p>
 
 | Metric | What it shows |
 |---|---|
