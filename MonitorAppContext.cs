@@ -189,11 +189,15 @@ public sealed class MonitorAppContext : ApplicationContext
     {
         var s = _sensors.Current;
         string gb(float? v) => v.HasValue ? $"{v:0.0}" : "-";
+        string diskText = s.Disks.Count == 0
+            ? "Disk: --"
+            : string.Join("\n", s.Disks.Select((d, i) =>
+                $"Disk{(s.Disks.Count > 1 ? $" {i + 1}" : "")} ({d.Name}): {Fmt(d.Load, "%")} • {Fmt(d.Temp, "°C")}"));
         string text =
             $"CPU: {Fmt(s.CpuLoad, "%")} • {Fmt(s.CpuTemp, "°C")}\n" +
             $"GPU{(s.GpuName != null ? $" ({s.GpuName})" : "")}: {Fmt(s.GpuLoad, "%")} • {Fmt(s.GpuTemp, "°C")}\n" +
             $"RAM: {Fmt(s.RamLoad, "%")} ({gb(s.RamUsedGb)} / {gb(s.RamTotalGb)} GB)\n" +
-            $"Disk: {Fmt(s.DiskLoad, "%")} • {Fmt(s.DiskTemp, "°C")}\n" +
+            diskText + "\n" +
             $"Net: ↑ {Spd(s.NetUpBps)}  ↓ {Spd(s.NetDownBps)}";
         if (!Program.IsElevated)
             text += "\n\n⚠ Not running as administrator: some temperatures are unavailable.";

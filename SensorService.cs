@@ -2,15 +2,17 @@ using LibreHardwareMonitor.Hardware;
 
 namespace TaskbarMonitor;
 
+public sealed record DiskInfo(string Name, float? Load, float? Temp);
+
 public sealed record Snapshot(
     float? CpuLoad, float? CpuTemp,
     float? GpuLoad, float? GpuTemp, string? GpuName,
     float? RamLoad, float? RamUsedGb, float? RamTotalGb,
-    float? DiskLoad, float? DiskTemp,
+    IReadOnlyList<DiskInfo> Disks,
     float? NetUpBps, float? NetDownBps)
 {
     public static readonly Snapshot Empty =
-        new(null, null, null, null, null, null, null, null, null, null, null, null);
+        new(null, null, null, null, null, null, null, null, Array.Empty<DiskInfo>(), null, null);
 }
 
 /// <summary>
@@ -61,7 +63,7 @@ public sealed class SensorService : IDisposable
             float? cpuLoad = null, cpuTemp = null;
             int cpuTempRank = int.MaxValue;
             float? ramLoad = null, ramUsed = null, ramAvail = null;
-            float? diskLoad = null, diskTemp = null;
+            var disks = new List<DiskInfo>();
             float netUp = 0, netDown = 0;
             bool anyNet = false;
 
@@ -109,15 +111,23 @@ public sealed class SensorService : IDisposable
                         break;
 
                     case HardwareType.Storage:
+                    {
+                        float? dLoad = null, dTemp = null;
+                        int dTempRank = int.MaxValue;
                         foreach (var s in hw.Sensors)
                         {
                             if (s.Value is not float v || float.IsNaN(v)) continue;
                             if (s.SensorType == SensorType.Load && s.Name == "Total Activity")
-                                diskLoad = Math.Max(diskLoad ?? 0, v);
+                                dLoad = v;
                             else if (s.SensorType == SensorType.Temperature && v > 0 && v < 100)
-                                diskTemp = Math.Max(diskTemp ?? 0, v);
+                            {
+                                int rank = DiskTempRank(s.Name);
+                                if (rank < dTempRank) { dTemp = v; dTempRank = rank; }
+                            }
                         }
+                        disks.Add(new DiskInfo(hw.Name, dLoad, dTemp));
                         break;
+                    }
 
                     case HardwareType.Network:
                         foreach (var s in hw.Sensors)
@@ -162,7 +172,7 @@ public sealed class SensorService : IDisposable
                 cpuLoad, cpuTemp,
                 gpuLoad, gpuTemp, gpuName,
                 ramLoad, ramUsed, ramTotal,
-                diskLoad, diskTemp,
+                disks,
                 anyNet ? netUp : null, anyNet ? netDown : null);
         }
         catch { }
@@ -176,6 +186,14 @@ public sealed class SensorService : IDisposable
         "Core Average" => 1,
         "Core Max" => 2,
         _ => 3,                    // anything else: use the highest value
+    };
+
+    private static int DiskTempRank(string name) => name switch
+    {
+        "Temperature" => 0,     // NVMe composite / SATA temperature — the meaningful one
+        "Temperature 1" => 1,
+        "Temperature 2" => 2,   // NVMe hotspot: reads much higher, not representative
+        _ => 3,
     };
 
     public void Dispose()

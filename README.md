@@ -11,23 +11,27 @@ straight over the taskbar, updated every second:
 ![TaskbarMonitor on the Windows 11 taskbar](docs/screenshot.png)
 
 <p align="center">
-  <img src="docs/screenshot-zoom.png" width="400" alt="Close-up of the overlay — DSK temperature at 71 °C shown in amber">
+  <img src="docs/screenshot-zoom.png" width="440" alt="Close-up of the overlay columns">
 </p>
 
-| Metric | What it shows |
+One column per device — header on top, load on the first line, temperature on
+the second (for NET: upload ↑ and download ↓). Adding a device is just adding
+a column.
+
+| Column | What it shows |
 |---|---|
 | **CPU** | Total load + temperature (Tctl/Tdie on AMD, Package on Intel) |
 | **GPU** | Load + temperature (prefers the discrete GPU; iGPUs use D3D counters) |
 | **RAM** | Usage percentage (tooltip shows used/total GB) |
-| **DSK** | Activity + temperature (max across all drives) |
-| **UP / DO** | Network upload / download (sum of all interfaces, `K` = KB/s, `M` = MB/s) |
+| **DISK 1 / DISK 2** | Per-drive activity + temperature (up to two drives in the bar, all of them in the tooltip; NVMe uses the composite sensor, not the hotspot) |
+| **NET** | Upload (↑) / download (↓), sum of all interfaces (`K` = KB/s, `M` = MB/s) |
 
 ## Features
 
 - **Native look** — transparent background, text rendered directly over the
   taskbar; follows the Windows light/dark theme automatically.
-- **Stable grid layout** — fixed-width cells sized for worst-case values, so
-  numbers never shift around as digits change.
+- **Stable column grid** — one column per device, widths sized for worst-case
+  values, so numbers never shift around as digits change.
 - **Color-coded alerts** — values turn yellow (≥ 70 °C / ≥ 85% load) and red
   (≥ 85 °C / ≥ 95% load).
 - **Multi-monitor** — one overlay per screen, pinned to that screen's taskbar

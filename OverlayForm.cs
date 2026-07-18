@@ -6,9 +6,12 @@ namespace TaskbarMonitor;
 /// <summary>
 /// Minimalist overlay (one instance per screen) pinned to the left corner of
 /// the taskbar. Layered window with a transparent background — only the text
-/// shows, straight over the taskbar — topmost and never steals focus. Grid
-/// layout: cell edges are shared between the two rows and values are always
-/// left-aligned inside their cell, so nothing jitters as digits change.
+/// shows, straight over the taskbar — topmost and never steals focus.
+///
+/// Column-per-device layout: a small header label on top (CPU, GPU, RAM,
+/// DISK 1, DISK 2, NET) and up to two value lines below it (load, temperature;
+/// for NET: upload, download). Column widths come from worst-case templates so
+/// nothing jitters, and adding a device is just adding a column.
 /// MonitorAppContext drives position and visibility.
 /// </summary>
 public sealed class OverlayForm : Form
@@ -29,28 +32,14 @@ public sealed class OverlayForm : Form
     /// working (alpha 0 would make the window click-through).</summary>
     private const int BackAlpha = 2;
 
-    /// <summary>A labeled group of cells. Cell edges are shared between rows of
-    /// the same column and values are always drawn left-aligned in their cell,
-    /// forming a stable grid.</summary>
-    private sealed record GroupDef(string Label, string[] Templates);
+    /// <summary>One device column: header label + up to two value lines.
+    /// ArrowValues = the first character of each value (↑/↓) is drawn in the
+    /// label color, glued to the number.</summary>
+    private sealed record ColumnDef(string Label, string?[] Templates, bool ArrowValues = false);
 
-    private static readonly GroupDef[][] Rows =
-    [
-        [
-            new("CPU", ["100%", "99°"]),
-            new("GPU", ["100%", "99°"]),
-            new("RAM", ["100%"]),
-        ],
-        [
-            new("DSK", ["100%", "99°"]),
-            new("UP", ["888M"]),
-            new("DO", ["888M"]),
-        ],
-    ];
-
-    // precomputed positions: [row][group] -> label x / start x of each cell
-    private float[][] _labelX = [];
-    private float[][][] _cellAnchor = [];
+    private ColumnDef[] _columns = [];
+    private int _diskCount = -1;
+    private float[] _colX = [];
 
     public OverlayForm(SensorService sensors, string screenDevice)
     {
@@ -63,6 +52,7 @@ public sealed class OverlayForm : Form
         Text = "TaskbarMonitor";
 
         SetTheme(dark: true, force: true);
+        EnsureColumns(1);
         BuildFonts();
     }
 
@@ -123,7 +113,32 @@ public sealed class OverlayForm : Form
 
     public int Dpi(int px) => (int)Math.Round(px * DeviceDpi / 96f);
 
-    // ----- fonts / grid layout ---------------------------------------------
+    // ----- columns / fonts / layout ----------------------------------------
+
+    /// <summary>Rebuilds the column list when the number of drives changes.
+    /// The bar shows at most two drives; the tooltip lists them all.</summary>
+    private void EnsureColumns(int diskCount)
+    {
+        int n = Math.Clamp(diskCount, 1, 2);
+        if (n == _diskCount) return;
+        _diskCount = n;
+
+        var cols = new List<ColumnDef>
+        {
+            new("CPU", ["100%", "99°"]),
+            new("GPU", ["100%", "99°"]),
+            new("RAM", ["100%", null]),
+        };
+        if (n == 1)
+            cols.Add(new ColumnDef("DISK", ["100%", "99°"]));
+        else
+            for (int i = 0; i < n; i++)
+                cols.Add(new ColumnDef($"DISK {i + 1}", ["100%", "99°"]));
+        cols.Add(new ColumnDef("NET", ["↑888M", "↓888M"], ArrowValues: true));
+
+        _columns = cols.ToArray();
+        if (_valueFont != null) BuildLayout();
+    }
 
     private void BuildFonts()
     {
@@ -139,66 +154,24 @@ public sealed class OverlayForm : Form
         using var bmp = new Bitmap(1, 1);
         using var g = Graphics.FromImage(bmp);
         var sf = StringFormat.GenericTypographic;
-        float gapGroup = Dpi(10), gapPair = Dpi(4), gapLabel = Dpi(4), pad = Dpi(8);
+        float gapCol = Dpi(12), pad = Dpi(8);
 
-        float MeasureL(string t) => g.MeasureString(t, _labelFont, PointF.Empty, sf).Width;
-        float MeasureV(string t) => g.MeasureString(t, _valueFont, PointF.Empty, sf).Width;
-
-        int rows = Rows.Length;
-        int maxGroups = Rows.Max(r => r.Length);
-        _labelX = new float[rows][];
-        _cellAnchor = new float[rows][][];
-        for (int r = 0; r < rows; r++)
-        {
-            _labelX[r] = new float[Rows[r].Length];
-            _cellAnchor[r] = new float[Rows[r].Length][];
-        }
-
+        _colX = new float[_columns.Length];
         float x = pad;
-        float rightMost = 0;
-        for (int gi = 0; gi < maxGroups; gi++)
+        for (int i = 0; i < _columns.Length; i++)
         {
-            // label column = widest label in the column; cell widths are
-            // shared between rows (widest template in the column)
-            float maxLabel = 0;
-            int maxCells = 0;
-            for (int r = 0; r < rows; r++)
+            _colX[i] = x;
+            var c = _columns[i];
+            float w = g.MeasureString(c.Label, _labelFont, PointF.Empty, sf).Width;
+            foreach (string? t in c.Templates)
             {
-                if (gi >= Rows[r].Length) continue;
-                maxLabel = Math.Max(maxLabel, MeasureL(Rows[r][gi].Label));
-                maxCells = Math.Max(maxCells, Rows[r][gi].Templates.Length);
+                if (t == null) continue;
+                w = Math.Max(w, g.MeasureString(t, _valueFont, PointF.Empty, sf).Width);
             }
-
-            var cellLeft = new float[maxCells];
-            float cx = x + maxLabel + gapLabel;
-            for (int c = 0; c < maxCells; c++)
-            {
-                cellLeft[c] = cx;
-                float cw = 0;
-                for (int r = 0; r < rows; r++)
-                {
-                    if (gi >= Rows[r].Length || c >= Rows[r][gi].Templates.Length) continue;
-                    cw = Math.Max(cw, MeasureV(Rows[r][gi].Templates[c]));
-                }
-                cx += cw + gapPair;
-            }
-            float slotEnd = cx - gapPair;
-
-            for (int r = 0; r < rows; r++)
-            {
-                if (gi >= Rows[r].Length) continue;
-                var def = Rows[r][gi];
-                _labelX[r][gi] = x;
-                var anchors = new float[def.Templates.Length];
-                for (int c = 0; c < def.Templates.Length; c++) anchors[c] = cellLeft[c];
-                _cellAnchor[r][gi] = anchors;
-            }
-
-            rightMost = slotEnd;
-            x = slotEnd + gapGroup;
+            x += w + gapCol;
         }
+        ContentWidth = (int)Math.Ceiling(x - gapCol + pad);
 
-        ContentWidth = (int)Math.Ceiling(rightMost + pad);
         _labelH = g.MeasureString("0", _labelFont, PointF.Empty, sf).Height;
         _valueH = g.MeasureString("0", _valueFont, PointF.Empty, sf).Height;
     }
@@ -228,38 +201,32 @@ public sealed class OverlayForm : Form
         int w = Math.Max(1, Width), h = Math.Max(1, Height);
 
         var s = _sensors.Current;
+        EnsureColumns(s.Disks.Count);
+
         string P(float? v) => v.HasValue ? $"{Math.Round(v.Value)}%" : "--";
         string T(float? v) => v.HasValue ? $"{Math.Round(v.Value)}°" : "--";
         Color LoadC(float? v) => v >= 95 ? _hotColor : v >= 85 ? _warnColor : _valueColor;
         Color TempC(float? v) => v >= 85 ? _hotColor : v >= 70 ? _warnColor : _valueColor;
 
-        // values/colors follow the same structure as Rows
-        string[][][] vals =
-        [
-            [
-                [P(s.CpuLoad), T(s.CpuTemp)],
-                [P(s.GpuLoad), T(s.GpuTemp)],
-                [P(s.RamLoad)],
-            ],
-            [
-                [P(s.DiskLoad), T(s.DiskTemp)],
-                [FormatSpeed(s.NetUpBps)],
-                [FormatSpeed(s.NetDownBps)],
-            ],
-        ];
-        Color[][][] cols =
-        [
-            [
-                [LoadC(s.CpuLoad), TempC(s.CpuTemp)],
-                [LoadC(s.GpuLoad), TempC(s.GpuTemp)],
-                [LoadC(s.RamLoad)],
-            ],
-            [
-                [LoadC(s.DiskLoad), TempC(s.DiskTemp)],
-                [_valueColor],
-                [_valueColor],
-            ],
-        ];
+        // per-column values (line 1, line 2) mirroring _columns
+        int count = _columns.Length;
+        var v1 = new string?[count]; var c1 = new Color[count];
+        var v2 = new string?[count]; var c2 = new Color[count];
+        int idx = 0;
+        Set(P(s.CpuLoad), LoadC(s.CpuLoad), T(s.CpuTemp), TempC(s.CpuTemp));
+        Set(P(s.GpuLoad), LoadC(s.GpuLoad), T(s.GpuTemp), TempC(s.GpuTemp));
+        Set(P(s.RamLoad), LoadC(s.RamLoad), null, default);
+        for (int i = 0; i < _diskCount; i++)
+        {
+            var d = i < s.Disks.Count ? s.Disks[i] : null;
+            Set(P(d?.Load), LoadC(d?.Load), T(d?.Temp), TempC(d?.Temp));
+        }
+        Set("↑" + FormatSpeed(s.NetUpBps), _valueColor, "↓" + FormatSpeed(s.NetDownBps), _valueColor);
+
+        void Set(string? a, Color ca, string? b, Color cb)
+        {
+            v1[idx] = a; c1[idx] = ca; v2[idx] = b; c2[idx] = cb; idx++;
+        }
 
         using var bmp = new Bitmap(w, h, PixelFormat.Format32bppArgb);
         using (var g = Graphics.FromImage(bmp))
@@ -267,30 +234,43 @@ public sealed class OverlayForm : Form
             g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
             g.Clear(Color.FromArgb(BackAlpha, _backColor));
 
-            float rowGap = Math.Max(1f, (h - 2 * _valueH) / 3f);
-            DrawRowAt(g, 0, vals[0], cols[0], rowGap);
-            DrawRowAt(g, 1, vals[1], cols[1], rowGap * 2 + _valueH);
+            var sf = StringFormat.GenericTypographic;
+            using var labelBrush = new SolidBrush(_labelColor);
+
+            // three lines: header + two value lines, evenly distributed
+            float gap = Math.Max(0f, (h - _labelH - 2 * _valueH) / 4f);
+            float yLabel = gap;
+            float yVal1 = yLabel + _labelH + gap;
+            float yVal2 = yVal1 + _valueH + gap;
+
+            for (int i = 0; i < count; i++)
+            {
+                var col = _columns[i];
+                float x = _colX[i];
+                g.DrawString(col.Label, _labelFont, labelBrush, new PointF(x, yLabel), sf);
+                if (v1[i] != null) DrawValue(g, v1[i]!, col.ArrowValues, x, yVal1, c1[i], labelBrush, sf);
+                if (v2[i] != null) DrawValue(g, v2[i]!, col.ArrowValues, x, yVal2, c2[i], labelBrush, sf);
+            }
         }
         Win32.UpdateLayered(Handle, bmp, Left, Top);
     }
 
-    private void DrawRowAt(Graphics g, int row, string[][] vals, Color[][] cols, float y)
+    private void DrawValue(Graphics g, string text, bool arrow, float x, float y,
+        Color color, SolidBrush labelBrush, StringFormat sf)
     {
-        var sf = StringFormat.GenericTypographic;
-        using var labelBrush = new SolidBrush(_labelColor);
-        float labelY = y + (_valueH - _labelH) - 1;
-
-        for (int gi = 0; gi < Rows[row].Length; gi++)
+        if (arrow && text.Length > 1)
         {
-            var def = Rows[row][gi];
-            g.DrawString(def.Label, _labelFont, labelBrush, new PointF(_labelX[row][gi], labelY), sf);
-
-            for (int c = 0; c < def.Templates.Length; c++)
-            {
-                using var brush = new SolidBrush(cols[gi][c]);
-                g.DrawString(vals[gi][c], _valueFont, brush,
-                    new PointF(_cellAnchor[row][gi][c], y), sf);
-            }
+            // arrow in the label color, number in the value color, glued together
+            string a = text[..1], rest = text[1..];
+            float wa = g.MeasureString(a, _valueFont, PointF.Empty, sf).Width;
+            g.DrawString(a, _valueFont, labelBrush, new PointF(x, y), sf);
+            using var brush = new SolidBrush(color);
+            g.DrawString(rest, _valueFont, brush, new PointF(x + wa, y), sf);
+        }
+        else
+        {
+            using var brush = new SolidBrush(color);
+            g.DrawString(text, _valueFont, brush, new PointF(x, y), sf);
         }
     }
 
