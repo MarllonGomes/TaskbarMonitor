@@ -1,4 +1,6 @@
 bin/
 obj/
 dist/
+installer/publish/
+installer/output/
 *.user

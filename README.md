@@ -50,17 +50,28 @@ a column.
 
 ## Installation
 
-### From a release (recommended)
+### Installer (recommended)
 
-1. Download the latest zip from [Releases](https://github.com/MarllonGomes/TaskbarMonitor/releases/latest):
+Download **`TaskbarMonitor-Setup-<version>.exe`** from
+[Releases](https://github.com/MarllonGomes/TaskbarMonitor/releases/latest) and
+run it — that's all. No .NET runtime required. The installer:
+
+- installs to `Program Files\TaskbarMonitor` and adds a Start Menu entry;
+- registers the elevated startup task, so temperatures work out of the box
+  and the monitor starts at every logon;
+- starts the monitor immediately, and installs updates right over the
+  previous version.
+
+Uninstall from Windows **Settings → Apps** (removes the startup task too).
+
+### Portable zip
+
+1. Download a zip from [Releases](https://github.com/MarllonGomes/TaskbarMonitor/releases/latest):
    - `TaskbarMonitor-<version>-win-x64.zip` — small, requires the
      [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
    - `TaskbarMonitor-<version>-win-x64-self-contained.zip` — larger, no runtime needed
-2. Extract it anywhere (e.g. `C:\Program Files\TaskbarMonitor` or a folder in your user profile).
+2. Extract it anywhere.
 3. Right-click `install.ps1` → **Run with PowerShell** and accept the UAC prompt once.
-
-That's it. The monitor appears in the left corner of the taskbar and will start
-automatically at every logon.
 
 > **Why administrator?** LibreHardwareMonitor needs a kernel driver to read CPU
 > and disk temperatures. Without elevation the app still works, but those
@@ -120,7 +131,8 @@ Sensor data comes from
 | [`SensorService.cs`](SensorService.cs) | Sensor polling (LibreHardwareMonitor) |
 | [`Autostart.cs`](Autostart.cs) | Scheduled Task management (`schtasks`) |
 | [`Win32.cs`](Win32.cs) | P/Invoke (SetWindowPos, UpdateLayeredWindow, EnumWindows, …) |
-| [`install.ps1`](install.ps1) / [`uninstall.ps1`](uninstall.ps1) | Autostart install/remove |
+| [`install.ps1`](install.ps1) / [`uninstall.ps1`](uninstall.ps1) | Autostart install/remove (portable zip) |
+| [`installer/`](installer) | Inno Setup installer (`build-installer.ps1` → `TaskbarMonitor-Setup-*.exe`) |
 
 ## Requirements
 
