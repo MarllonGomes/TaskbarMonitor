@@ -22,7 +22,7 @@ a column.
 |---|---|
 | **CPU** | Total load + temperature (Tctl/Tdie on AMD, Package on Intel) |
 | **GPU** | Load + temperature (prefers the discrete GPU; iGPUs use D3D counters) |
-| **RAM** | Usage percentage (tooltip shows used/total GB) |
+| **RAM** | Usage percentage + used GB (tooltip shows used/total) |
 | **DISK 1 / DISK 2** | Per-drive activity + temperature (up to two drives in the bar, all of them in the tooltip; NVMe uses the composite sensor, not the hotspot) |
 | **NET** | Upload (↑) / download (↓), sum of all interfaces (`K` = KB/s, `M` = MB/s) |
 

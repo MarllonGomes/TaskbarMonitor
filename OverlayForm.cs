@@ -127,7 +127,7 @@ public sealed class OverlayForm : Form
         {
             new("CPU", ["100%", "99°"]),
             new("GPU", ["100%", "99°"]),
-            new("RAM", ["100%", null]),
+            new("RAM", ["100%", "88.8G"]),
         };
         if (n == 1)
             cols.Add(new ColumnDef("DISK", ["100%", "99°"]));
@@ -144,7 +144,8 @@ public sealed class OverlayForm : Form
     {
         _labelFont?.Dispose();
         _valueFont?.Dispose();
-        _labelFont = new Font("Segoe UI", Math.Max(8, Dpi(9)), FontStyle.Regular, GraphicsUnit.Pixel);
+        // ~500 weight for the small header labels (closest GDI static face)
+        _labelFont = new Font("Segoe UI Semibold", Math.Max(7, Dpi(8)), FontStyle.Regular, GraphicsUnit.Pixel);
         _valueFont = new Font("Segoe UI", Math.Max(10, Dpi(12)), FontStyle.Regular, GraphicsUnit.Pixel);
         BuildLayout();
     }
@@ -185,6 +186,13 @@ public sealed class OverlayForm : Form
 
     // ----- rendering (layered) ---------------------------------------------
 
+    /// <summary>Compact gigabytes: "9.8G", "13.1G", "128G".</summary>
+    public static string FormatGb(float? gb)
+    {
+        if (!gb.HasValue) return "--";
+        return gb.Value >= 100 ? $"{gb.Value:0}G" : $"{gb.Value:0.0}G";
+    }
+
     /// <summary>Compact, at most 3 digits + unit: "0K", "87K", "999K", "2M", "118M".</summary>
     public static string FormatSpeed(float? bps)
     {
@@ -215,7 +223,7 @@ public sealed class OverlayForm : Form
         int idx = 0;
         Set(P(s.CpuLoad), LoadC(s.CpuLoad), T(s.CpuTemp), TempC(s.CpuTemp));
         Set(P(s.GpuLoad), LoadC(s.GpuLoad), T(s.GpuTemp), TempC(s.GpuTemp));
-        Set(P(s.RamLoad), LoadC(s.RamLoad), null, default);
+        Set(P(s.RamLoad), LoadC(s.RamLoad), FormatGb(s.RamUsedGb), _valueColor);
         for (int i = 0; i < _diskCount; i++)
         {
             var d = i < s.Disks.Count ? s.Disks[i] : null;
@@ -237,11 +245,13 @@ public sealed class OverlayForm : Form
             var sf = StringFormat.GenericTypographic;
             using var labelBrush = new SolidBrush(_labelColor);
 
-            // three lines: header + two value lines, evenly distributed
-            float gap = Math.Max(0f, (h - _labelH - 2 * _valueH) / 4f);
-            float yLabel = gap;
-            float yVal1 = yLabel + _labelH + gap;
-            float yVal2 = yVal1 + _valueH + gap;
+            // three lines: header + two value lines. Weighted distribution:
+            // extra padding on top (detaches the header from the taskbar edge)
+            // and a small breathing gap between the lines.
+            float unit = Math.Max(0f, (h - _labelH - 2 * _valueH) / 4f);
+            float yLabel = unit * 1.6f;
+            float yVal1 = yLabel + _labelH + unit * 1.0f;
+            float yVal2 = yVal1 + _valueH + unit * 0.8f;
 
             for (int i = 0; i < count; i++)
             {
