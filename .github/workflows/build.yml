@@ -40,11 +40,9 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Install Inno Setup
-        # Pin the version so a poisoned/updated package can't silently change
-        # the tool that compiles the elevated installer.
-        run: choco install innosetup --version=6.3.3 -y --no-progress
-
+      # The windows-latest runner ships Inno Setup pre-installed (ISCC under
+      # Program Files). We use that instead of fetching a third-party choco
+      # package at build time, avoiding that supply-chain step entirely.
       - name: Build installer
         run: powershell -NoProfile -ExecutionPolicy Bypass -File installer\build-installer.ps1
 
