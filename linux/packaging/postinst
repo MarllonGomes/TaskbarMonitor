@@ -1,0 +1,27 @@
+#!/bin/sh
+# Refresh desktop/icon caches and, best-effort, launch the app now in the
+# active graphical session so it appears immediately (autostart otherwise
+# starts it at the next login).
+set -e
+
+if [ "$1" = "configure" ]; then
+    if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database -q /usr/share/applications 2>/dev/null || true
+    fi
+    if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+        gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor 2>/dev/null || true
+    fi
+
+    if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
+        uid=$(id -u "$SUDO_USER" 2>/dev/null || true)
+        if [ -n "$uid" ] && [ -d "/run/user/$uid" ] && command -v runuser >/dev/null 2>&1; then
+            runuser -u "$SUDO_USER" -- env \
+                DISPLAY="${DISPLAY:-:0}" \
+                XDG_RUNTIME_DIR="/run/user/$uid" \
+                DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+                sh -c 'nohup taskbar-monitor >/dev/null 2>&1 &' 2>/dev/null || true
+        fi
+    fi
+fi
+
+exit 0

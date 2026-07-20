@@ -1,0 +1,10 @@
+#!/bin/sh
+# Stop any running instance before the files are removed or replaced.
+set -e
+
+if [ "$1" = "remove" ] || [ "$1" = "upgrade" ] || [ "$1" = "deconfigure" ]; then
+    pkill -f "/usr/lib/taskbar-monitor" 2>/dev/null || true
+    pkill -x taskbar-monitor 2>/dev/null || true
+fi
+
+exit 0

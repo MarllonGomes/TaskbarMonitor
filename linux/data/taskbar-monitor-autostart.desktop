@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=TaskbarMonitor
+Comment=CPU, GPU, RAM, disk and network monitor in the top bar
+Exec=taskbar-monitor
+Icon=taskbar-monitor
+Terminal=false
+Categories=System;Monitor;Utility;
+X-GNOME-Autostart-enabled=true
