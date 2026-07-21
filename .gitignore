@@ -1,5 +1,9 @@
 bin/
+!linux/packaging/bin/
+!linux/packaging/bin/**
 obj/
+linux/*.deb
+linux/gnome-extension/*/schemas/gschemas.compiled
 dist/
 dist_old/
 dist_stale/

@@ -10,9 +10,10 @@ Depends: python3 (>= 3.8),
 Maintainer: Marllon Gomes <marllon.fgomes@gmail.com>
 Homepage: https://github.com/MarllonGomes/TaskbarMonitor
 Description: Minimalist hardware monitor in the top bar
- TaskbarMonitor shows CPU, GPU, RAM, disk and network load and temperature as
- an AppIndicator in the top bar, with a detailed dropdown menu. It updates once
- a second and starts automatically at login.
+ TaskbarMonitor shows CPU, GPU, RAM, disk and network load and temperature in
+ the top bar, with a detailed dropdown. On GNOME (Ubuntu) it is a native Shell
+ extension with compact panel groups, usage meters and temperature badges; on
+ other desktops it runs as an AppIndicator tray app. It updates once a second.
  .
  All readings come from /proc and /sys (and nvidia-smi for NVIDIA GPUs), so it
  runs as a normal user with no root privileges and no kernel module — unlike

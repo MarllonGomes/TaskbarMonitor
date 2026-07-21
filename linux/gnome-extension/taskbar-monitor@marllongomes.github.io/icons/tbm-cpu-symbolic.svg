@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g fill="#bebebe">
+    <rect x="4.25" y="0" width="1.5" height="2.5"/>
+    <rect x="7.25" y="0" width="1.5" height="2.5"/>
+    <rect x="10.25" y="0" width="1.5" height="2.5"/>
+    <rect x="4.25" y="13.5" width="1.5" height="2.5"/>
+    <rect x="7.25" y="13.5" width="1.5" height="2.5"/>
+    <rect x="10.25" y="13.5" width="1.5" height="2.5"/>
+    <rect x="0" y="4.25" width="2.5" height="1.5"/>
+    <rect x="0" y="7.25" width="2.5" height="1.5"/>
+    <rect x="0" y="10.25" width="2.5" height="1.5"/>
+    <rect x="13.5" y="4.25" width="2.5" height="1.5"/>
+    <rect x="13.5" y="7.25" width="2.5" height="1.5"/>
+    <rect x="13.5" y="10.25" width="2.5" height="1.5"/>
+    <path fill-rule="evenodd" d="M4.5 2.5 h7 a2 2 0 0 1 2 2 v7 a2 2 0 0 1 -2 2 h-7 a2 2 0 0 1 -2 -2 v-7 a2 2 0 0 1 2 -2 Z M5.5 4 A1.5 1.5 0 0 0 4 5.5 v5 A1.5 1.5 0 0 0 5.5 12 h5 a1.5 1.5 0 0 0 1.5 -1.5 v-5 A1.5 1.5 0 0 0 10.5 4 Z"/>
+    <rect x="6" y="6" width="4" height="4" rx="1"/>
+  </g>
+</svg>

@@ -7,3 +7,5 @@ Icon=taskbar-monitor
 Terminal=false
 Categories=System;Monitor;Utility;
 X-GNOME-Autostart-enabled=true
+# On GNOME the native Shell extension provides the top-bar UI instead.
+NotShowIn=GNOME;

@@ -15,11 +15,25 @@ if [ "$1" = "configure" ]; then
     if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
         uid=$(id -u "$SUDO_USER" 2>/dev/null || true)
         if [ -n "$uid" ] && [ -d "/run/user/$uid" ] && command -v runuser >/dev/null 2>&1; then
-            runuser -u "$SUDO_USER" -- env \
-                DISPLAY="${DISPLAY:-:0}" \
-                XDG_RUNTIME_DIR="/run/user/$uid" \
-                DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
-                sh -c 'nohup taskbar-monitor >/dev/null 2>&1 &' 2>/dev/null || true
+            if pgrep -u "$uid" -x gnome-shell >/dev/null 2>&1; then
+                # GNOME: the Shell extension is the UI. Best-effort enable; a
+                # freshly installed system extension needs a log-out/in first.
+                runuser -u "$SUDO_USER" -- env \
+                    XDG_RUNTIME_DIR="/run/user/$uid" \
+                    DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+                    gnome-extensions enable taskbar-monitor@marllongomes.github.io \
+                    2>/dev/null || true
+                echo "TaskbarMonitor: on GNOME, enable the extension with:"
+                echo "  gnome-extensions enable taskbar-monitor@marllongomes.github.io"
+                echo "(log out and back in first so GNOME Shell picks it up)"
+            else
+                # other desktops: launch the AppIndicator tray app now
+                runuser -u "$SUDO_USER" -- env \
+                    DISPLAY="${DISPLAY:-:0}" \
+                    XDG_RUNTIME_DIR="/run/user/$uid" \
+                    DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+                    sh -c 'nohup taskbar-monitor >/dev/null 2>&1 &' 2>/dev/null || true
+            fi
         fi
     fi
 fi

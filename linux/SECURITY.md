@@ -20,8 +20,13 @@ The Linux build is deliberately low-risk:
   `~/.config/autostart/` when you toggle "Start at login".
 - **No network.** No telemetry, no auto-update, no outbound connections.
 - **One external command.** `nvidia-smi` is invoked with a fixed argument list
-  and **no shell** (`subprocess.run([...], shell=False)`) to read NVIDIA GPU
-  stats. If it is absent or fails, GPU readings are simply omitted.
+  and **no shell** (`subprocess.run([...], shell=False)` in the tray app,
+  `Gio.Subprocess` in the GNOME extension) to read NVIDIA GPU stats. If it is
+  absent or fails, GPU readings are simply omitted.
+- **The GNOME extension runs inside GNOME Shell** (like every Shell
+  extension). It does the same reads as the tray app, exposes no D-Bus
+  interfaces of its own, evaluates no remote or dynamic code, and stores its
+  settings in GSettings.
 
 ## Package integrity
 

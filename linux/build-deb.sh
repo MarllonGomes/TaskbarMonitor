@@ -27,6 +27,19 @@ install -d -m 0755 \
 install -m 0644 "$HERE/src/app.py"     "$BUILD/usr/lib/$PKG/app.py"
 install -m 0644 "$HERE/src/sensors.py" "$BUILD/usr/lib/$PKG/sensors.py"
 
+# GNOME Shell extension (native top-bar UI on GNOME / Ubuntu)
+EXT_UUID="taskbar-monitor@marllongomes.github.io"
+EXT_SRC="$HERE/gnome-extension/$EXT_UUID"
+EXT_DST="$BUILD/usr/share/gnome-shell/extensions/$EXT_UUID"
+install -d -m 0755 "$BUILD/usr/share/gnome-shell" \
+    "$BUILD/usr/share/gnome-shell/extensions" \
+    "$EXT_DST" "$EXT_DST/icons" "$EXT_DST/schemas"
+install -m 0644 "$EXT_SRC"/*.js "$EXT_SRC/metadata.json" "$EXT_SRC/stylesheet.css" "$EXT_DST/"
+install -m 0644 "$EXT_SRC/icons/"*.svg "$EXT_DST/icons/"
+install -m 0644 "$EXT_SRC/schemas/"*.gschema.xml "$EXT_DST/schemas/"
+glib-compile-schemas "$EXT_DST/schemas/"
+chmod 0644 "$EXT_DST/schemas/gschemas.compiled"
+
 # launcher, desktop entries, icon
 install -m 0755 "$HERE/packaging/bin/taskbar-monitor" "$BUILD/usr/bin/taskbar-monitor"
 install -m 0644 "$HERE/data/taskbar-monitor.desktop"  "$BUILD/usr/share/applications/taskbar-monitor.desktop"

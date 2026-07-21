@@ -1,0 +1,3 @@
+#!/bin/sh
+# Launcher for the TaskbarMonitor AppIndicator tray app (non-GNOME desktops).
+exec python3 /usr/lib/taskbar-monitor/app.py "$@"

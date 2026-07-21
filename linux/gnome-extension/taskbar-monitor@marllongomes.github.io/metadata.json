@@ -1,0 +1,9 @@
+{
+  "uuid": "taskbar-monitor@marllongomes.github.io",
+  "name": "TaskbarMonitor",
+  "description": "CPU, GPU, RAM, disk and network load and temperature in the top bar — compact, theme-friendly, updated every second.",
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "url": "https://github.com/MarllonGomes/TaskbarMonitor",
+  "settings-schema": "org.gnome.shell.extensions.taskbar-monitor",
+  "version-name": "1.0.0"
+}

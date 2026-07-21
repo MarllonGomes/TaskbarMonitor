@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.taskbar-monitor"
+          path="/org/gnome/shell/extensions/taskbar-monitor/">
+    <key name="show-cpu" type="b">
+      <default>true</default>
+      <summary>Show CPU in the top bar</summary>
+    </key>
+    <key name="show-gpu" type="b">
+      <default>true</default>
+      <summary>Show GPU in the top bar</summary>
+    </key>
+    <key name="show-ram" type="b">
+      <default>true</default>
+      <summary>Show memory in the top bar</summary>
+    </key>
+    <key name="show-disk" type="b">
+      <default>false</default>
+      <summary>Show disk in the top bar (busiest disk)</summary>
+    </key>
+    <key name="show-net" type="b">
+      <default>false</default>
+      <summary>Show network rates in the top bar</summary>
+    </key>
+    <key name="show-temps" type="b">
+      <default>true</default>
+      <summary>Show temperatures next to loads in the top bar</summary>
+    </key>
+    <key name="update-interval" type="i">
+      <default>1</default>
+      <range min="1" max="10"/>
+      <summary>Refresh interval in seconds</summary>
+    </key>
+    <key name="panel-position" type="s">
+      <choices>
+        <choice value="left"/>
+        <choice value="center"/>
+        <choice value="right"/>
+      </choices>
+      <default>'right'</default>
+      <summary>Where in the top bar the indicator sits</summary>
+    </key>
+  </schema>
+</schemalist>

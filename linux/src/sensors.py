@@ -223,9 +223,10 @@ class Sensors:
 
     @staticmethod
     def _disk_temp(dev: str) -> float | None:
-        # nvme and drivetemp (SATA) expose temp under the device's hwmon.
+        # SATA drivetemp lives at device/hwmon/hwmonN, NVMe at device/hwmonN.
         best = None
-        for inp in glob.glob(f"/sys/block/{dev}/device/hwmon/hwmon*/temp*_input"):
+        for inp in (glob.glob(f"/sys/block/{dev}/device/hwmon/hwmon*/temp*_input")
+                    or glob.glob(f"/sys/block/{dev}/device/hwmon*/temp*_input")):
             raw = _read_int(inp)
             if raw is None:
                 continue
