@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=TaskbarMonitor
+GenericName=System Monitor
+Comment=CPU, GPU, RAM, disk and network load and temperature in the top bar
+Exec=taskbar-monitor
+Icon=taskbar-monitor
+Terminal=false
+Categories=System;Monitor;Utility;GTK;
+Keywords=cpu;gpu;ram;temperature;monitor;system;

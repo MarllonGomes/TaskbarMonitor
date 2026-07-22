@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g fill="#bebebe">
+    <rect x="0" y="2.75" width="1.25" height="10.5" rx="0.6"/>
+    <path fill-rule="evenodd" d="M3.75 3.5 h10.5 a1.75 1.75 0 0 1 1.75 1.75 v5.5 a1.75 1.75 0 0 1 -1.75 1.75 h-10.5 a1.75 1.75 0 0 1 -1.75 -1.75 v-5.5 a1.75 1.75 0 0 1 1.75 -1.75 Z M4.5 4.75 a1 1 0 0 0 -1 1 v4.5 a1 1 0 0 0 1 1 h9 a1 1 0 0 0 1 -1 v-4.5 a1 1 0 0 0 -1 -1 Z"/>
+    <path fill-rule="evenodd" d="M6.5 5.8 a2.2 2.2 0 1 0 0 4.4 a2.2 2.2 0 1 0 0 -4.4 Z M6.5 6.9 a1.1 1.1 0 1 1 0 2.2 a1.1 1.1 0 1 1 0 -2.2 Z"/>
+    <path fill-rule="evenodd" d="M11.5 5.8 a2.2 2.2 0 1 0 0 4.4 a2.2 2.2 0 1 0 0 -4.4 Z M11.5 6.9 a1.1 1.1 0 1 1 0 2.2 a1.1 1.1 0 1 1 0 -2.2 Z"/>
+  </g>
+</svg>
