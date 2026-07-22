@@ -31,6 +31,33 @@ APP_ID = "taskbar-monitor"
 ICON_NAME = "taskbar-monitor"
 AUTOSTART_FILE = os.path.expanduser("~/.config/autostart/taskbar-monitor.desktop")
 
+# value colors when too high — thresholds match the Windows build
+WARN_COLOR = "#e5a50a"
+CRIT_COLOR = "#ed333b"
+
+
+def _load_color(v: float | None) -> str | None:
+    if v is None:
+        return None
+    return CRIT_COLOR if v >= 95 else WARN_COLOR if v >= 85 else None
+
+
+def _temp_color(v: float | None) -> str | None:
+    if v is None:
+        return None
+    return CRIT_COLOR if v >= 85 else WARN_COLOR if v >= 70 else None
+
+
+def _disk_temp_color(v: float | None) -> str | None:
+    if v is None:
+        return None
+    return CRIT_COLOR if v >= 68 else WARN_COLOR if v >= 55 else None
+
+
+def _span(text: str, color: str | None) -> str:
+    esc = GLib.markup_escape_text(text)
+    return f'<span foreground="{color}">{esc}</span>' if color else esc
+
 
 def _pct(v: float | None) -> str:
     return f"{round(v)}%" if v is not None else "--"
@@ -117,13 +144,27 @@ class MonitorApp:
         # guide reserves a stable width so the panel doesn't jitter
         self._ind.set_label(label, "CPU 100% 99°  GPU 100% 99°  RAM 100%")
 
+    @staticmethod
+    def _set_markup(item: Gtk.MenuItem, markup: str) -> None:
+        child = item.get_child()
+        if isinstance(child, Gtk.Label):
+            child.set_markup(markup)
+        else:  # fallback: plain text without the color spans
+            item.set_label(GLib.markup_escape_text(markup))
+
     def _update_menu(self, s: Snapshot) -> None:
         gb = lambda v: f"{v:.1f}" if v is not None else "-"
-        self._items["cpu"].set_label(f"CPU:  {_pct(s.cpu_load)}   •   {_degc(s.cpu_temp)}")
+        self._set_markup(self._items["cpu"],
+            f"CPU:  {_span(_pct(s.cpu_load), _load_color(s.cpu_load))}"
+            f"   •   {_span(_degc(s.cpu_temp), _temp_color(s.cpu_temp))}")
         gpu_name = f" ({s.gpu_name})" if s.gpu_name else ""
-        self._items["gpu"].set_label(f"GPU{gpu_name}:  {_pct(s.gpu_load)}   •   {_degc(s.gpu_temp)}")
-        self._items["ram"].set_label(
-            f"RAM:  {_pct(s.ram_load)}   ({gb(s.ram_used_gb)} / {gb(s.ram_total_gb)} GB)")
+        self._set_markup(self._items["gpu"],
+            f"GPU{GLib.markup_escape_text(gpu_name)}:"
+            f"  {_span(_pct(s.gpu_load), _load_color(s.gpu_load))}"
+            f"   •   {_span(_degc(s.gpu_temp), _temp_color(s.gpu_temp))}")
+        self._set_markup(self._items["ram"],
+            f"RAM:  {_span(_pct(s.ram_load), _load_color(s.ram_load))}"
+            f"   ({gb(s.ram_used_gb)} / {gb(s.ram_total_gb)} GB)")
         self._items["net"].set_label(
             f"Net:  ↑ {_speed(s.net_up_bps)}   ↓ {_speed(s.net_down_bps)}")
 
@@ -140,9 +181,10 @@ class MonitorApp:
                 self._menu.insert(it, pos + i)
                 self._disk_items.append(it)
         for it, d in zip(self._disk_items, s.disks):
-            multi = len(s.disks) > 1
-            name = d.name if not multi else f"{d.name}"
-            it.set_label(f"Disk ({name}):  {_pct(d.load)}   •   {_degc(d.temp)}")
+            self._set_markup(it,
+                f"Disk ({GLib.markup_escape_text(d.name)}):"
+                f"  {_span(_pct(d.load), _load_color(d.load))}"
+                f"   •   {_span(_degc(d.temp), _disk_temp_color(d.temp))}")
 
     # ---- autostart ----------------------------------------------------------
 
@@ -180,6 +222,16 @@ class MonitorApp:
 
 
 def main() -> int:
+    # On GNOME the TaskbarMonitor Shell extension provides the top-bar UI;
+    # don't add a second (tray) icon unless explicitly forced.
+    desktop = os.environ.get("XDG_CURRENT_DESKTOP", "")
+    if "GNOME" in desktop.upper() and os.environ.get("TASKBAR_MONITOR_FORCE") != "1":
+        sys.stderr.write(
+            "taskbar-monitor: on GNOME, the top-bar UI is the TaskbarMonitor "
+            "Shell extension:\n"
+            "  gnome-extensions enable taskbar-monitor@marllongomes.github.io\n"
+            "Set TASKBAR_MONITOR_FORCE=1 to start the tray app anyway.\n")
+        return 0
     signal.signal(signal.SIGINT, signal.SIG_DFL)   # Ctrl-C from a terminal
     MonitorApp()
     Gtk.main()

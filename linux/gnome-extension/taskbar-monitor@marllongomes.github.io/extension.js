@@ -25,9 +25,9 @@ import {Sensors} from './sensors.js';
 const SHELL_MAJOR = parseInt(PACKAGE_VERSION.split('.')[0], 10);
 const HAS_ACCENT_COLOR = SHELL_MAJOR >= 47;
 
-// severity thresholds: [warn, crit]
-const LOAD_LEVELS = [70, 90];
-const CHIP_TEMP_LEVELS = [75, 90];
+// severity thresholds [warn, crit], matching the Windows build
+const LOAD_LEVELS = [85, 95];
+const CHIP_TEMP_LEVELS = [70, 85];
 const DISK_TEMP_LEVELS = [55, 68];
 
 function severity(value, [warn, crit]) {
@@ -204,6 +204,7 @@ class TbmMetricRow extends PopupMenu.PopupBaseMenuItem {
 
     update({value = '', detail = null, load = null, temp = null, tempLevels = CHIP_TEMP_LEVELS} = {}) {
         this._value.text = value;
+        setSeverityClass(this._value, severity(load, LOAD_LEVELS));
         this._detail.visible = detail !== null;
         if (detail !== null)
             this._detail.text = detail;
@@ -240,9 +241,10 @@ class PanelGroup {
     }
 
     // tnum keeps digits fixed-width so the bar doesn't wobble every second
-    setLoad(text) {
+    setLoad(text, sev = '') {
         this._load.clutter_text.set_markup(
             `<span font_features='tnum'>${GLib.markup_escape_text(text, -1)}</span>`);
+        setSeverityClass(this._load, sev);
     }
 
     setTemp(text, show, sev = '') {
@@ -382,23 +384,23 @@ class TbmIndicator extends PanelMenu.Button {
         // top bar
         const g = this._groups;
         g.cpu.actor.visible = s.get_boolean('show-cpu');
-        g.cpu.setLoad(pct(snap.cpuLoad));
+        g.cpu.setLoad(pct(snap.cpuLoad), severity(snap.cpuLoad, LOAD_LEVELS));
         g.cpu.setTemp(deg(snap.cpuTemp), showTemps,
             severity(snap.cpuTemp, CHIP_TEMP_LEVELS));
 
         g.gpu.actor.visible = s.get_boolean('show-gpu') && hasGpu;
-        g.gpu.setLoad(pct(snap.gpuLoad));
+        g.gpu.setLoad(pct(snap.gpuLoad), severity(snap.gpuLoad, LOAD_LEVELS));
         g.gpu.setTemp(deg(snap.gpuTemp), showTemps,
             severity(snap.gpuTemp, CHIP_TEMP_LEVELS));
 
         g.ram.actor.visible = s.get_boolean('show-ram');
-        g.ram.setLoad(pct(snap.ramLoad));
+        g.ram.setLoad(pct(snap.ramLoad), severity(snap.ramLoad, LOAD_LEVELS));
 
         const busiest = snap.disks.reduce((a, d) =>
             (d.load ?? -1) > (a?.load ?? -1) ? d : a, null);
         g.disk.actor.visible = s.get_boolean('show-disk') && busiest !== null;
         if (busiest) {
-            g.disk.setLoad(pct(busiest.load));
+            g.disk.setLoad(pct(busiest.load), severity(busiest.load, LOAD_LEVELS));
             const hottest = snap.disks.reduce((a, d) =>
                 (d.temp ?? -1) > (a ?? -1) ? d.temp : a, null);
             g.disk.setTemp(deg(hottest), showTemps,

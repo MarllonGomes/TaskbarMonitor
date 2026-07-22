@@ -15,12 +15,13 @@
     icon-size: 14px;
 }
 
-/* hot temperatures tint in the bar; readable on dark and light panels */
-.tbm-group .tbm-warn {
+/* hot values tint amber/red (thresholds match the Windows build);
+ * these tones stay readable on both dark and light panels/menus */
+.tbm-warn {
     color: #e5a50a;
 }
 
-.tbm-group .tbm-crit {
+.tbm-crit {
     color: #ed333b;
 }
 
