@@ -4,7 +4,7 @@
 ; uninstall. Build with installer\build-installer.ps1.
 
 #define MyAppName "TaskbarMonitor"
-#define MyAppVersion "1.1.2"
+#define MyAppVersion "1.2.0"
 #define MyAppPublisher "Marllon Gomes"
 #define MyAppURL "https://github.com/MarllonGomes/TaskbarMonitor"
 #define MyAppExeName "TaskbarMonitor.exe"

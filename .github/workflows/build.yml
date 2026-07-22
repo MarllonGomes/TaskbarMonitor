@@ -3,10 +3,12 @@ name: Build
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
 
 # Least privilege: the build only needs to read the repo. No write scope is
 # granted to GITHUB_TOKEN, limiting the blast radius of a poisoned build step.
+# The release job alone gets contents:write, and only runs on version tags.
 permissions:
   contents: read
 
@@ -43,6 +45,9 @@ jobs:
       # The windows-latest runner ships Inno Setup pre-installed (ISCC under
       # Program Files). We use that instead of fetching a third-party choco
       # package at build time, avoiding that supply-chain step entirely.
+      # build-installer.ps1 also produces the self-contained single-file
+      # publish under installer\publish, which we ship as the portable
+      # self-contained zip.
       - name: Build installer
         run: powershell -NoProfile -ExecutionPolicy Bypass -File installer\build-installer.ps1
 
@@ -51,3 +56,65 @@ jobs:
         with:
           name: TaskbarMonitor-Setup
           path: installer/output/*.exe
+
+      - name: Upload self-contained publish
+        uses: actions/upload-artifact@v4
+        with:
+          name: TaskbarMonitor-win-x64-self-contained
+          path: installer/publish
+
+  deb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build .deb
+        run: ./linux/build-deb.sh
+
+      - name: Upload .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: taskbar-monitor-deb
+          path: linux/*.deb
+
+  # On a version tag (vX.Y.Z): gather everything the previous releases shipped
+  # for Windows, plus the Linux .deb, checksum the lot, and publish the release.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, installer, deb]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Assemble release assets
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p out
+          # portable zips = publish output + install scripts + docs (same
+          # layout previous releases shipped)
+          for d in TaskbarMonitor-win-x64 TaskbarMonitor-win-x64-self-contained; do
+            cp install.ps1 uninstall.ps1 LICENSE README.md SECURITY.md \
+               THIRD-PARTY-NOTICES.txt "artifacts/$d/"
+          done
+          (cd artifacts/TaskbarMonitor-win-x64 && zip -qr9 "$GITHUB_WORKSPACE/out/TaskbarMonitor-$VERSION-win-x64.zip" .)
+          (cd artifacts/TaskbarMonitor-win-x64-self-contained && zip -qr9 "$GITHUB_WORKSPACE/out/TaskbarMonitor-$VERSION-win-x64-self-contained.zip" .)
+          cp artifacts/TaskbarMonitor-Setup/*.exe out/
+          cp artifacts/taskbar-monitor-deb/*.deb out/
+          (cd out && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt)
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" out/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "TaskbarMonitor $GITHUB_REF_NAME" \
+            --draft \
+            --generate-notes

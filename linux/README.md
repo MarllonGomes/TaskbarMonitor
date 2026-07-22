@@ -53,7 +53,7 @@ Download `taskbar-monitor_<version>_all.deb` from the
 [Releases](https://github.com/MarllonGomes/TaskbarMonitor/releases) and:
 
 ```bash
-sudo apt install ./taskbar-monitor_1.0.0_all.deb
+sudo apt install ./taskbar-monitor_1.2.0_all.deb
 ```
 
 **GNOME (Ubuntu):** log out and back in once (GNOME Shell scans system

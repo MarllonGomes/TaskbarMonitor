@@ -8,6 +8,10 @@ A minimalist hardware monitor that lives in the **left corner of the Windows 11
 taskbar**, on **every screen**. No window, no dock, no skin — just numbers drawn
 straight over the taskbar, updated every second:
 
+> 🐧 **Also on Linux!** A native GNOME Shell extension for Ubuntu (plus an
+> AppIndicator tray app for KDE/XFCE), packaged as a `.deb` — see
+> **[linux/](linux/)**.
+
 ![TaskbarMonitor on the Windows 11 taskbar](docs/screenshot.png)
 
 <p align="center">
@@ -48,7 +52,23 @@ a column.
 - **Lightweight** — a single small .NET 8 process; sensors are read once per
   second on a background thread via LibreHardwareMonitor.
 
-## Installation
+## Linux (Ubuntu / GNOME, KDE, XFCE…)
+
+The Linux port lives in [`linux/`](linux/) and installs from a single `.deb`
+(`sudo apt install ./taskbar-monitor_<version>_all.deb`, from
+[Releases](https://github.com/MarllonGomes/TaskbarMonitor/releases/latest)).
+The GNOME top bar is much smaller than the Windows taskbar, so on GNOME the UI
+is a **native Shell extension** built for that space — compact
+`icon + load% temp°` groups with the full breakdown (usage meters, temperature
+badges, per-disk rows, network rates) in the popup menu; the same amber/red
+thresholds as Windows. Other desktops get an AppIndicator tray app. No root,
+no kernel module — details in [`linux/README.md`](linux/README.md).
+
+| GNOME top bar | Popup menu |
+|---|---|
+| ![panel](linux/docs/screenshot-panel.png) | <img src="linux/docs/screenshot-menu.png" width="300" alt="GNOME popup menu"> |
+
+## Installation (Windows)
 
 ### Installer (recommended)
 
